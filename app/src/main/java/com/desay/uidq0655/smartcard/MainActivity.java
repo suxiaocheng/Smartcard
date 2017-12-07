@@ -1,8 +1,6 @@
 package com.desay.uidq0655.smartcard;
 
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -13,19 +11,25 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.desay.openmobile.Tmc200;
+
 import org.simalliance.openmobileapi.Channel;
 import org.simalliance.openmobileapi.Reader;
 import org.simalliance.openmobileapi.SEService;
 import org.simalliance.openmobileapi.Session;
 
+import java.util.Arrays;
+
 public class MainActivity extends AppCompatActivity implements SEService.CallBack {
     private final String LOG_TAG = "HelloSmartcard";
-
     private SEService seService;
+    private Tmc200 tmc200;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        tmc200 = new Tmc200();
 
         LinearLayout layout = new LinearLayout(this);
         layout.setLayoutParams(new Toolbar.LayoutParams(
@@ -36,8 +40,37 @@ public class MainActivity extends AppCompatActivity implements SEService.CallBac
         button.setLayoutParams(new Toolbar.LayoutParams(
                 Toolbar.LayoutParams.WRAP_CONTENT,
                 Toolbar.LayoutParams.WRAP_CONTENT));
-
         button.setText("Click Me");
+        layout.addView(button);
+
+        Button btTestReset = new Button(this);
+        btTestReset.setLayoutParams(new Toolbar.LayoutParams(
+                Toolbar.LayoutParams.WRAP_CONTENT,
+                Toolbar.LayoutParams.WRAP_CONTENT));
+        btTestReset.setText("Reset");
+        layout.addView(btTestReset);
+
+        Button btTestTransmit = new Button(this);
+        btTestTransmit.setLayoutParams(new Toolbar.LayoutParams(
+                Toolbar.LayoutParams.WRAP_CONTENT,
+                Toolbar.LayoutParams.WRAP_CONTENT));
+        btTestTransmit.setText("Transmit");
+        layout.addView(btTestTransmit);
+
+        Button btTestGetAtr = new Button(this);
+        btTestGetAtr.setLayoutParams(new Toolbar.LayoutParams(
+                Toolbar.LayoutParams.WRAP_CONTENT,
+                Toolbar.LayoutParams.WRAP_CONTENT));
+        btTestGetAtr.setText("GetAtr");
+        layout.addView(btTestGetAtr);
+
+        Button btTestClose = new Button(this);
+        btTestClose.setLayoutParams(new Toolbar.LayoutParams(
+                Toolbar.LayoutParams.WRAP_CONTENT,
+                Toolbar.LayoutParams.WRAP_CONTENT));
+        btTestClose.setText("Close");
+        layout.addView(btTestClose);
+
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
@@ -46,17 +79,21 @@ public class MainActivity extends AppCompatActivity implements SEService.CallBac
                     if (readers.length < 1)
                         return;
 
+                    for (int i = 0; i < readers.length; i++) {
+                        Log.d(LOG_TAG, "reader" + i + ":" + readers[i].getName());
+                    }
+
                     Log.i(LOG_TAG, "Create Session from the first reader...");
                     Session session = readers[0].openSession();
 
                     Log.i(LOG_TAG, "Create logical channel within the session...");
-                    Channel channel = session.openLogicalChannel(new byte[] {
+                    Channel channel = session.openLogicalChannel(new byte[]{
                             (byte) 0xD2, 0x76, 0x00, 0x01, 0x18, 0x00, 0x02,
                             (byte) 0xFF, 0x49, 0x50, 0x25, (byte) 0x89,
-                            (byte) 0xC0, 0x01, (byte) 0x9B, 0x01 });
+                            (byte) 0xC0, 0x01, (byte) 0x9B, 0x01});
 
                     Log.d(LOG_TAG, "Send HelloWorld APDU command");
-                    byte[] respApdu = channel.transmit(new byte[] { (byte) 0x90, 0x10, 0x00, 0x00, 0x00 });
+                    byte[] respApdu = channel.transmit(new byte[]{(byte) 0x90, 0x10, 0x00, 0x00, 0x00});
 
                     channel.close();
 
@@ -72,7 +109,39 @@ public class MainActivity extends AppCompatActivity implements SEService.CallBac
             }
         });
 
-        layout.addView(button);
+        btTestReset.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                tmc200.reset();
+            }
+        });
+
+        btTestTransmit.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                byte[] cmd = {0x00, (byte) 0x84, 0x00, 0x00, 0x08};
+                byte[] response;
+                response = tmc200.transmit(cmd);
+                if ((response != null) && (response.length != 0)) {
+                    Log.d(LOG_TAG, Arrays.toString(response));
+                }
+            }
+        });
+
+        btTestGetAtr.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                byte[] response;
+                response = tmc200.getAtr();
+                if (response.length != 0) {
+                    Log.d(LOG_TAG, response.toString());
+                }
+            }
+        });
+
+        btTestClose.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                tmc200.close();
+            }
+        });
+
         setContentView(layout);
 
         try {
