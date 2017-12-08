@@ -26,7 +26,7 @@ public class Channel {
             } else {
                 if(!this.isClosed()) {
                     Object var1 = this.mLock;
-                    this.mChannel.close();
+                    this.mChannel.closeChannel();
                 }
 
             }
@@ -40,7 +40,7 @@ public class Channel {
             if(this.mChannel == null) {
                 throw new IllegalStateException("channel must not be null");
             } else {
-                return this.mChannel.isClosed();
+                return this.mChannel.isChannelClosed();
             }
         } else {
             throw new IllegalStateException("service not connected to system");

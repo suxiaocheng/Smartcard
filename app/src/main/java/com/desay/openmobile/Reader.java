@@ -14,7 +14,7 @@ public class Reader {
     private Tmc200 mReader;
     private final Object mLock = new Object();
 
-    Reader(Object service, Tmc200 reader, String name) {
+    public Reader(Object service, Tmc200 reader, String name) {
         this.mName = name;
         this.mService = service;
         this.mReader = reader;
@@ -30,7 +30,7 @@ public class Reader {
             synchronized(this.mLock) {
                 Session var10000;
 
-                if (mReader.open() == true) {
+                if (mReader.openReader() == true) {
                     var10000 = new Session(mReader, this);
                     return var10000;
                 } else {
@@ -58,7 +58,7 @@ public class Reader {
         if(this.mService != null) {
             Object var1 = this.mLock;
             synchronized(this.mLock) {
-                this.mReader.close();
+                this.mReader.closeReader();
             }
         } else {
             throw new IllegalStateException("service is not connected");

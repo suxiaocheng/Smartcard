@@ -147,43 +147,45 @@ int unconfig_device_path(void) {
     return 0;
 }
 
-JNIEXPORT jbyteArray JNICALL Java_com_desay_uidq0655_smartcard_Tmc200_transmit
+JNIEXPORT jboolean JNICALL Java_com_desay_openmobile_Tmc200_open
+        (JNIEnv *env, jobject obj)
+{
+    int ret;
+    if (check_device_path() == 0) {
+        init_uart(UART_DEV);
+        if (ret < 0) {
+            return (jboolean)0;
+        }
+    }
+    return (jboolean)1;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_com_desay_openmobile_Tmc200_transmit
         (JNIEnv *env, jobject obj, jbyteArray array) {
     jbyte *arrayBody = (*env)->GetByteArrayElements(env, array, 0);
     jsize theArrayLengthJ = (*env)->GetArrayLength(env, array);
     char *command = (char *) arrayBody;
     jbyteArray bytes = 0;
     int len = 0;
+    char *ret_cmd;
+    int ret;
 
     LOGD("Command:");
     dump_memory(command, theArrayLengthJ);
 
-    if (check_device_path() == 0) {
-        char *ret_cmd;
-        int ret;
-
-        init_uart(UART_DEV);
-        if(ret < 0){
-            return -1;
-        }
-
-        set_apdu_buf(command, theArrayLengthJ);
-        ret = trans_t0();
-        if (ret == 0) {
-            err("Execute cmd fail\n");
-        } else {
-            len = get_apdu_length();
-            ret_cmd = get_apdu();
-            dump_memory(ret_cmd, len);
-
-            bytes = (*env)->NewByteArray(env, len);
-            if (bytes != 0) {
-                (*env)->SetByteArrayRegion(env, bytes, 0, len,
-                                           (jbyte *) ret_cmd);
-            }
-        }
+    set_apdu_buf(command, theArrayLengthJ);
+    ret = trans_t0();
+    if (ret == 0) {
+        err("Execute cmd fail\n");
     } else {
-        LOGE("Error check device");
+        len = get_apdu_length();
+        ret_cmd = get_apdu();
+        dump_memory(ret_cmd, len);
+
+        bytes = (*env)->NewByteArray(env, len);
+        if (bytes != 0) {
+            (*env)->SetByteArrayRegion(env, bytes, 0, len, (jbyte *) ret_cmd);
+        }
     }
 
     (*env)->ReleaseByteArrayElements(env, array, arrayBody, JNI_COMMIT);
@@ -192,40 +194,47 @@ JNIEXPORT jbyteArray JNICALL Java_com_desay_uidq0655_smartcard_Tmc200_transmit
 }
 
 
-JNIEXPORT jbyteArray JNICALL Java_com_desay_uidq0655_smartcard_Tmc200_reset
+JNIEXPORT jbyteArray JNICALL Java_com_desay_openmobile_Tmc200_reset
         (JNIEnv *env, jobject obj)
 {
     jbyteArray bytes = 0;
     char *response;
     int len = 0;
 
-    bytes = (*env)->NewByteArray(env, len);
-    if (bytes != 0) {
-        (*env)->SetByteArrayRegion(env, bytes, 0, len,
-                                   (jbyte *) response);
+    len = CARDreset();
+    if(len > 0) {
+        bytes = (*env)->NewByteArray(env, len);
+        if (bytes != 0) {
+            (*env)->SetByteArrayRegion(env, bytes, 0, get_apdu_length(),
+                                       (jbyte *) get_apdu());
+        }
     }
 
     return bytes;
 }
 
-
-JNIEXPORT jbyteArray JNICALL Java_com_desay_uidq0655_smartcard_Tmc200_getATR
+JNIEXPORT jbyteArray JNICALL Java_com_desay_openmobile_Tmc200_getATR
         (JNIEnv *env, jobject obj)
 {
     jbyteArray bytes = 0;
     char *response;
     int len = 0;
 
-    bytes = (*env)->NewByteArray(env, len);
-    if (bytes != 0) {
-        (*env)->SetByteArrayRegion(env, bytes, 0, len,
-                                   (jbyte *) response);
+    len = CARDreset();
+    if(len > 0) {
+        bytes = (*env)->NewByteArray(env, len);
+        if (bytes != 0) {
+            (*env)->SetByteArrayRegion(env, bytes, 0, get_apdu_length(),
+                                       (jbyte *) get_apdu());
+        }
     }
 
     return bytes;
 }
 
-JNIEXPORT void JNICALL Java_com_desay_uidq0655_smartcard_Tmc200_close
-    (JNIEnv *env, jobject obj)
+JNIEXPORT jboolean JNICALL Java_com_desay_openmobile_Tmc200_close
+        (JNIEnv *env, jobject obj)
 {
+    unconfig_device_path();
+    return (jboolean)1;
 }

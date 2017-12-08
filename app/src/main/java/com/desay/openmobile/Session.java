@@ -1,8 +1,5 @@
 package com.desay.openmobile;
 
-import android.os.RemoteException;
-import android.util.Log;
-
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
@@ -51,7 +48,7 @@ public class Session {
     }
 
     public boolean isClosed() {
-        return this.mSession == null || this.mSession.isClosed();
+        return this.mSession == null || this.mSession.isSessionClosed();
     }
 
     public void closeChannels() {

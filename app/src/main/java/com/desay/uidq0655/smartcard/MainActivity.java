@@ -11,12 +11,11 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.desay.openmobile.Channel;
+import com.desay.openmobile.Reader;
+import com.desay.openmobile.SEService;
+import com.desay.openmobile.Session;
 import com.desay.openmobile.Tmc200;
-
-import org.simalliance.openmobileapi.Channel;
-import org.simalliance.openmobileapi.Reader;
-import org.simalliance.openmobileapi.SEService;
-import org.simalliance.openmobileapi.Session;
 
 import java.util.Arrays;
 
@@ -88,14 +87,15 @@ public class MainActivity extends AppCompatActivity implements SEService.CallBac
 
                     Log.i(LOG_TAG, "Create logical channel within the session...");
                     Channel channel = session.openLogicalChannel(new byte[]{
-                            (byte) 0xD2, 0x76, 0x00, 0x01, 0x18, 0x00, 0x02,
-                            (byte) 0xFF, 0x49, 0x50, 0x25, (byte) 0x89,
-                            (byte) 0xC0, 0x01, (byte) 0x9B, 0x01});
+                            0x01, (byte)0xa4, 0x04, 0x0, 0x10, (byte)0xa0, 0x0, 0x0,
+                            0x06, 0x28, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x1, (byte)0xe2,
+                            0x0, 0x01});
 
                     Log.d(LOG_TAG, "Send HelloWorld APDU command");
-                    byte[] respApdu = channel.transmit(new byte[]{(byte) 0x90, 0x10, 0x00, 0x00, 0x00});
+                    byte[] respApdu = channel.transmit(new byte[]{0x00, (byte) 0x84, 0x00, 0x00, 0x08});
 
                     channel.close();
+                    readers[0].closeSessions();
 
                     // Parse response APDU and show text but remove SW1 SW2 first
                     byte[] helloStr = new byte[respApdu.length - 2];
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements SEService.CallBac
         btTestGetAtr.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 byte[] response;
-                response = tmc200.getAtr();
+                response = tmc200.getATR();
                 if (response.length != 0) {
                     Log.d(LOG_TAG, response.toString());
                 }
